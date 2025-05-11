@@ -1,4 +1,4 @@
-# 🛡️ Azure Honeypot with Sentinel Watchlist-Based Geolocation
+# 🛡️ Azure Honeypot with Geolocation & Sentinel Integration
 
 ## 📌 Project Overview
 This project is a virtual honeypot deployed in [Microsoft Azure](https://azure.microsoft.com/), designed to detect and visualize unauthorized login attempts in real time. The honeypot runs on a Windows virtual machine and captures failed RDP login attempts using Windows Event Viewer (Event ID 4625).  
