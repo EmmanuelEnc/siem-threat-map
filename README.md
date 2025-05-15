@@ -58,8 +58,8 @@ friendly_location = strcat(cityname, " (", countryname, ")");
 ```
    ![KQL Workbook](https://i.imgur.com/s4N2uyc.png)
 
-**Attacks map after 16 hours:**  
-![Attack Map](https://i.imgur.com/A6kqSUZ.png)
+**Attacks map after 5 days:**  
+![Attack Map](https://i.imgur.com/S0SMjSv.png)
 
 ## 🚀 Future Improvements
 - Enable alerts and automated playbooks to respond to brute-force activity  
