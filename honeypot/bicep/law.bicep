@@ -23,11 +23,6 @@ resource law 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }
-
-    // No daily cap by default (0 = unlimited). Easy for labs; watch costs in production.
-    //workspaceCapping: {
-     // dailyQuotaGb: 0
-    //}
   }
 }
 
