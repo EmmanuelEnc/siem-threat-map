@@ -1,34 +1,62 @@
-param location string = resourceGroup().location
+// bicep/network.bicep
+// VNet + Subnet + NSG (inbound allow-all) and attach NSG to the subnet
 
-@description('Name of the virtual network resource.')
-param virtualNetworkName string = 'HoneyPotVNet'
+param vnetName string
+param subnetName string
+param nsgName string
+param location string
 
-@description('Array of address blocks reserved for this virtual network, in CIDR notation.')
-param addressSpace object = {
-  addressPrefixes: [
-    '10.1.0.0/16'
-  ]
-}
+// address spaces defaults
+param vnetAddressPrefix string = '10.10.0.0/16'
+param subnetAddressPrefix string = '10.10.1.0/24'
 
-@description('Array of subnet objects for this virtual network.')
-param subnets array = [
-  {
-    name: 'default'
-    properties: {
-      addressPrefixes: [
-        '10.1.0.0/24'
-      ]
-    }
-  }
-]
-
-resource vnet 'Microsoft.Network/virtualNetworks@2024-01-01' = {
-  name: virtualNetworkName
+// Network Security Group with 1 inbound allow-all rule
+resource nsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
+  name: nsgName
   location: location
   properties: {
-    addressSpace: addressSpace
-    subnets: subnets
+    securityRules: [
+      {
+        name: 'Allow-All-Inbound'
+        properties: {
+          priority: 100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: '*'
+          sourcePortRange: '*'
+          destinationPortRange: '*'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+        }
+      }
+    ]
   }
 }
 
-output virtualNetworkId string = vnet.id
+resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
+  name: vnetName
+  location: location
+  properties: {
+    addressSpace: {
+      addressPrefixes: [
+        vnetAddressPrefix
+      ]
+    }
+    subnets: [
+      {
+        name: subnetName
+        properties: {
+          addressPrefix: subnetAddressPrefix
+          networkSecurityGroup: {
+            id: nsg.id
+          }
+        }
+      }
+    ]
+  }
+}
+
+// Handy outputs for chaining to NIC/VM templates
+output vnetId string = vnet.id
+output subnetId string = vnet.properties.subnets[0].id
+output nsgId string = nsg.id
