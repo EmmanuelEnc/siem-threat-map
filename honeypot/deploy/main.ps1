@@ -25,17 +25,16 @@ $lawOutputs = az deployment group create `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $workspaceId        = $lawOutputs.workspaceId.value
-$workspaceLocation  = $lawOutputs.workspaceLocation.value
 $workspaceCustomerId= $lawOutputs.customerId.value
 
-Write-Host "LAW deployed: $workspaceName @ $workspaceLocation"
+Write-Host "LAW deployed: $workspaceName @ $location (ID: $workspaceId)"
 
 # --- Sentinel deployment ---
 $sentinelOutputs = az deployment group create `
   -g $resourceGroupName `
   -f ../bicep/sentinel.bicep `
   -p workspaceId="$workspaceId" `
-    workspaceLocation="$workspaceLocation" `
+    location="$location" `
     workspaceName="$workspaceName" `
   --query properties.outputs -o json | ConvertFrom-Json
 
