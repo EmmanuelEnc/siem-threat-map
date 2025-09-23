@@ -1,18 +1,48 @@
 param(
-    [string]$RgName = "RgHoneyPot",
-    [string]$Location = "EastUS",
-    [string]$ProjectName = "honeypot" 
+    [string]$projectName = "honeypot",
+    [string]$resourceGroupName = "honeypot-rg",
+    [string]$location = "eastus",
+
+    [string]$workspaceName = "honeypot-law",
+
+    [string]$vnetName = "honeypot-vnet",
+    [string]$subnetName = "honeypot-subnet",
+    [string]$nsgName = "honeypot-nsg",
+
+    [string]$vmName = "honeypot-vm",
+    [string]$adminUsername = "azureuser"
 )
 
 # Create Resource Group
-az group create -n $RgName -l $Location | Out-Null
+az group create -n $resourceGroupName -l $location | Out-Null
 
-# Deploy LAW
-az deployment group create `
-  -g $RgName `
+# --- Log Analytics Workspace deployment ---
+$lawOutputs = az deployment group create `
+  -g $resourceGroupName `
   -f ../bicep/law.bicep `
-  -p workspaceName="$ProjectName-law" location="$Location" 
-# Sentinel 
+  -p workspaceName="$workspaceName" 
+     location="$location" `
+  --query properties.outputs -o json | ConvertFrom-Json
+
+$workspaceId        = $lawOutputs.workspaceId.value
+$workspaceLocation  = $lawOutputs.workspaceLocation.value
+$workspaceCustomerId= $lawOutputs.customerId.value
+
+Write-Host "LAW deployed: $workspaceName @ $workspaceLocation"
+
+# --- Sentinel deployment ---
+$sentinelOutputs = az deployment group create `
+  -g $resourceGroupName `
+  -f ../bicep/sentinel.bicep `
+  -p workspaceId="$workspaceId" `
+     workspaceLocation="$workspaceLocation" `
+     workspaceName="$workspaceName" `
+  --query properties.outputs -o json | ConvertFrom-Json
+
+$sentinelSolutionId   = $sentinelOutputs.sentinelSolutionId.value
+$sentinelSolutionName = $sentinelOutputs.sentinelSolutionName.value
+
+Write-Host "Sentinel enabled: $sentinelSolutionName"
 
 # Network (vnet, subnet, NSG with inbound allow)
 

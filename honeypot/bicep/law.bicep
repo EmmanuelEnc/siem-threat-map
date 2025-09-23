@@ -2,7 +2,7 @@
 // Simple Log Analytics Workspace for Sentinel + DCRs
 
 param workspaceName string
-param location string = resourceGroup().location
+param location string 
 param retentionDays int = 30   // Default retention; adjust as needed
 
 // We’ll hardcode the common SKU and recommended features.
@@ -30,4 +30,3 @@ resource law 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 output workspaceId string = law.id
 output customerId string = law.properties.customerId
 output workspaceLocation string = law.location
-output name string = law.name
