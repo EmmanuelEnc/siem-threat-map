@@ -20,8 +20,8 @@ az group create -n $resourceGroupName -l $location | Out-Null
 $lawOutputs = az deployment group create `
   -g $resourceGroupName `
   -f ../bicep/law.bicep `
-  -p workspaceName="$workspaceName" 
-     location="$location" `
+  -p workspaceName="$workspaceName" `
+    location="$location" `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $workspaceId        = $lawOutputs.workspaceId.value
@@ -35,8 +35,8 @@ $sentinelOutputs = az deployment group create `
   -g $resourceGroupName `
   -f ../bicep/sentinel.bicep `
   -p workspaceId="$workspaceId" `
-     workspaceLocation="$workspaceLocation" `
-     workspaceName="$workspaceName" `
+    workspaceLocation="$workspaceLocation" `
+    workspaceName="$workspaceName" `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $sentinelSolutionId   = $sentinelOutputs.sentinelSolutionId.value
