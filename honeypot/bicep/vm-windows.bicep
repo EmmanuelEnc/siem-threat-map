@@ -108,7 +108,7 @@ resource ama 'Microsoft.Compute/virtualMachines/extensions@2022-11-01' = {
   }
 }
 
-// Custom Script Extension: disable all Windows Firewall profiles
+// --- Custom Script Extension: disable all Windows Firewall profiles ---
 resource disableFw 'Microsoft.Compute/virtualMachines/extensions@2022-11-01' = if (disableFirewall) {
   parent: vm
   name: 'disableWindowsFirewall'

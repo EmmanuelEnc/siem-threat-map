@@ -12,10 +12,11 @@ param(
     [string]$vmName = "honeypot-vm",
     [string]$adminUsername = "azureuser",
     [string]$adminPassword = "P@ssw0rd123!",
-
     [string]$vmSize = "Standard_D2s_v3",
     [string]$publicIpSku = "Standard",
-    [bool]$disableFirewall = $true
+    [bool]$disableFirewall = $true,
+
+    [string]$dcrName = "honeypot-winsec-dcr"
 )
 
 # --- Create Resource Group ---
@@ -50,9 +51,6 @@ $sentinelOutputs = az deployment group create `
 
 $sentinelSolutionId   = $sentinelOutputs.sentinelSolutionId.value
 $sentinelSolutionName = $sentinelOutputs.sentinelSolutionName.value
-
-Write-Host "Sentinel enabled: $sentinelSolutionName"
-
 
 # --- Network (VNet, Subnet, NSG attach) ---
 $netOutputs = az deployment group create `
@@ -98,7 +96,19 @@ Write-Host "VM deployed:"
 Write-Host "  Id: $vmId"
 Write-Host "  Public IP: $publicIpAddress"
 
-# DCR + Association
+
+# --- DCR (Windows Security) + Association to VM ---
+$dcrOutputs = az deployment group create `
+  -g $resourceGroupName `
+  -f ../bicep/dcr-windows.bicep `
+  -p dcrName="$dcrName" `
+     location="$location" `
+     workspaceId="$workspaceId" `
+  --query properties.outputs -o json | ConvertFrom-Json
+
+$dcrId  = $dcrOutputs.dataCollectionRuleId.value
+
+Write-Host "DCR created: $dcrId"
 
 # Content (Workbook, Analytics rule)
 
