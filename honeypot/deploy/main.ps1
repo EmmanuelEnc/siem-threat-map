@@ -9,12 +9,19 @@ param(
     [string]$subnetName = "honeypot-subnet1",
     [string]$nsgName = "honeypot-nsg1",
 
+    // VM parameters
     [string]$vmName = "honeypot-vm",
     [string]$adminUsername = "azureuser"
+    [string]$adminPassword = "P@ssw0rd123!"
+
+    [string]$vmSize = "Standard_D2s_v3"
+    [string]$publicIpSku = "Standard"
 )
 
-# Create Resource Group
+# --- Create Resource Group ---
 az group create -n $resourceGroupName -l $location | Out-Null
+
+Write-Host "Resource Group created: $resourceGroupName @ $location"
 
 
 # --- Log Analytics Workspace deployment ---
@@ -66,7 +73,29 @@ Write-Host "  VNet:   $vnetName ($vnetId)"
 Write-Host "  Subnet: $subnetName ($subnetId)"
 Write-Host "  NSG:    $nsgName ($nsgId)"
 
+
 # VM + AMA + disable firewall via CustomScriptExtension
+$vmOutputs = az deployment group create `
+  -g $resourceGroupName `
+  -f ../bicep/vm-windows.bicep `
+  -p vmName="$vmName" `
+    location="$location" `
+    subnetId="$subnetId" `
+    adminUsername="$adminUsername" `
+    adminPassword="$adminPassword" `
+    vmSize="$vmSize" `
+    publicIpSku="$publicIpSku" `
+    disableFirewall=$true `
+  --query properties.outputs -o json | ConvertFrom-Json
+
+$vmId = $vmOutputs.vmId.value
+$nicId = $vmOutputs.nicId.value
+$publicIpId = $vmOutputs.publicIpId.value
+$publicIpAddress = $vmOutputs.publicIpAddress.value
+
+Write-Host "VM deployed:"
+Write-Host "  Id: $vmId"
+Write-Host "  Public IP: $publicIpAddress"
 
 # DCR + Association
 
