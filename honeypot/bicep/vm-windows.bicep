@@ -5,6 +5,7 @@
 param vmName string
 param location string
 param subnetId string
+param nsgId string
 param adminUsername string
 @secure()
 param adminPassword string
@@ -20,31 +21,7 @@ resource pip 'Microsoft.Network/publicIPAddresses@2023-11-01' = {
     name: publicIpSku
   }
   properties: {
-    publicIPAllocationMethod: 'Dynamic'
-  }
-}
-
-// --- NIC-level NSG that ONLY allows RDP inbound ---
-resource nicNsg 'Microsoft.Network/networkSecurityGroups@2023-11-01' = {
-  name: '${vmName}-nic-nsg'
-  location: location
-  properties: {
-    securityRules: [
-      {
-        name: 'Allow-RDP-3389'
-        properties: {
-          priority: 100
-          direction: 'Inbound'
-          access: 'Allow'
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '3389'
-          sourceAddressPrefix: '*'
-          destinationAddressPrefix: '*'
-        }
-      }
-      // All other inbound traffic is denied by default
-    ]
+    publicIPAllocationMethod: 'static'
   }
 }
 
@@ -68,7 +45,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2023-11-01' = {
       }
     ]
     networkSecurityGroup: {
-      id: nicNsg.id
+      id: nsgId
     }
   }
 }
@@ -80,9 +57,6 @@ resource vm 'Microsoft.Compute/virtualMachines@2023-09-01' = {
   properties: {
     hardwareProfile: {
       vmSize: vmSize
-    }
-    securityProfile: {
-      securityType: 'Standard'
     }
     osProfile: {
       computerName: vmName

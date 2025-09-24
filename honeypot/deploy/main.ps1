@@ -9,13 +9,13 @@ param(
     [string]$subnetName = "honeypot-subnet1",
     [string]$nsgName = "honeypot-nsg1",
 
-    // VM parameters
     [string]$vmName = "honeypot-vm",
-    [string]$adminUsername = "azureuser"
-    [string]$adminPassword = "P@ssw0rd123!"
+    [string]$adminUsername = "azureuser",
+    [string]$adminPassword = "P@ssw0rd123!",
 
-    [string]$vmSize = "Standard_D2s_v3"
-    [string]$publicIpSku = "Standard"
+    [string]$vmSize = "Standard_D2s_v3",
+    [string]$publicIpSku = "Standard",
+    [bool]$disableFirewall = $true
 )
 
 # --- Create Resource Group ---
@@ -69,9 +69,9 @@ $subnetId = $netOutputs.subnetId.value
 $nsgId    = $netOutputs.nsgId.value
 
 Write-Host "Network ready:"
-Write-Host "  VNet:   $vnetName ($vnetId)"
-Write-Host "  Subnet: $subnetName ($subnetId)"
-Write-Host "  NSG:    $nsgName ($nsgId)"
+Write-Host "  VNet:   $vnetName"
+Write-Host "  Subnet: $subnetName"
+Write-Host "  NSG:    $nsgName"
 
 
 # VM + AMA + disable firewall via CustomScriptExtension
@@ -81,11 +81,12 @@ $vmOutputs = az deployment group create `
   -p vmName="$vmName" `
     location="$location" `
     subnetId="$subnetId" `
+    nsgId="$nsgId" `
     adminUsername="$adminUsername" `
     adminPassword="$adminPassword" `
     vmSize="$vmSize" `
     publicIpSku="$publicIpSku" `
-    disableFirewall=$true `
+    disableFirewall=$disableFirewall `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $vmId = $vmOutputs.vmId.value
