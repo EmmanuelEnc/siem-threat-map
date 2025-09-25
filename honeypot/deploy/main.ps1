@@ -11,7 +11,7 @@ param(
 
     [string]$vmName = "honeypot-vm",
     [string]$adminUsername = "azureuser",
-    [string]$adminPassword = "P@ssw0rd123!",
+    [String]$adminPassword = 'P@ssw0rd1234!',
     [string]$vmSize = "Standard_D2s_v3",
     [string]$publicIpSku = "Standard",
     [bool]$disableFirewall = $true,
@@ -21,11 +21,13 @@ param(
     [string] $watchlistAlias = "geoip",
     [string] $watchlistDisplay = "IP Geolocation (CSV)",
     [string] $itemsSearchKey = "network"
+
+    [string] $workbookName = "AttackMap"
+    [string] $wbDeployName = "workbook-attackmap"
 )
 
 # --- Create Resource Group ---
 az group create -n $resourceGroupName -l $location | Out-Null
-
 Write-Host "Resource Group created: $resourceGroupName @ $location"
 
 
@@ -38,11 +40,8 @@ $lawOutputs = az deployment group create `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $workspaceId        = $lawOutputs.workspaceId.value
-$workspaceCustomerId= $lawOutputs.customerId.value
 $workspaceLocation  = $lawOutputs.workspaceLocation.value
-
 Write-Host "LAW deployed: $workspaceName @ $workspaceLocation"
-
 
 # --- Sentinel deployment ---
 $sentinelOutputs = az deployment group create `
@@ -53,8 +52,9 @@ $sentinelOutputs = az deployment group create `
     workspaceName="$workspaceName" `
   --query properties.outputs -o json | ConvertFrom-Json
 
-$sentinelSolutionId   = $sentinelOutputs.sentinelSolutionId.value
 $sentinelSolutionName = $sentinelOutputs.sentinelSolutionName.value
+Write-Host "Sentinel solution deployed: $sentinelSolutionName"
+
 
 # --- Network (VNet, Subnet, NSG attach) ---
 $netOutputs = az deployment group create `
@@ -66,10 +66,8 @@ $netOutputs = az deployment group create `
     location="$location" `
   --query properties.outputs -o json | ConvertFrom-Json
 
-$vnetId   = $netOutputs.vnetId.value
 $subnetId = $netOutputs.subnetId.value
 $nsgId    = $netOutputs.nsgId.value
-
 Write-Host "Network ready:"
 Write-Host "  VNet:   $vnetName"
 Write-Host "  Subnet: $subnetName"
@@ -84,7 +82,6 @@ $vmOutputs = az deployment group create `
     location="$location" `
     subnetId="$subnetId" `
     nsgId="$nsgId" `
-    adminUsername="$adminUsername" `
     adminPassword="$adminPassword" `
     vmSize="$vmSize" `
     publicIpSku="$publicIpSku" `
@@ -92,8 +89,6 @@ $vmOutputs = az deployment group create `
   --query properties.outputs -o json | ConvertFrom-Json
 
 $vmId = $vmOutputs.vmId.value
-$nicId = $vmOutputs.nicId.value
-$publicIpId = $vmOutputs.publicIpId.value
 $publicIpAddress = $vmOutputs.publicIpAddress.value
 
 Write-Host "VM deployed:"
@@ -183,8 +178,6 @@ if ([string]::IsNullOrWhiteSpace($wlExists)) {
 }
 
 # --- Workbook (AttackMap) ---
-$workbookName = "AttackMap"
-$wbDeployName = "workbook-attackmap"
 $wbFile       = (Resolve-Path '..\bicep\workbook.bicep').Path
 
 
