@@ -127,6 +127,4 @@ resource disableFw 'Microsoft.Compute/virtualMachines/extensions@2022-11-01' = i
 
 // Outputs for chaining
 output vmId string = vm.id
-output nicId string = nic.id
-output publicIpId string = pip.id
 output publicIpAddress string = pip.properties.ipAddress

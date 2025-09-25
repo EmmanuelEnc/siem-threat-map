@@ -28,5 +28,4 @@ resource law 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 
 // Helpful outputs for chaining into Sentinel, DCRs, and Workbooks
 output workspaceId string = law.id
-output customerId string = law.properties.customerId
 output workspaceLocation string = law.location

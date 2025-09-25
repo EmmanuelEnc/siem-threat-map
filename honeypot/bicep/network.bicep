@@ -57,6 +57,5 @@ resource vnet 'Microsoft.Network/virtualNetworks@2023-11-01' = {
 }
 
 // Handy outputs for chaining to NIC/VM templates
-output vnetId string = vnet.id
 output subnetId string = vnet.properties.subnets[0].id
 output nsgId string = nsg.id

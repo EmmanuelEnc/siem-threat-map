@@ -21,5 +21,4 @@ resource sentinel 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' 
 }
 
 // Helpful outputs
-output sentinelSolutionId string = sentinel.id
 output sentinelSolutionName string = sentinel.name
