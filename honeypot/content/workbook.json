@@ -1,33 +1,44 @@
 {
-	"type": 3,
-	"content": {
-	"version": "KqlItem/1.0",
-	"query": "let GeoIPDB_FULL = _GetWatchlist(\"geoip\");\nlet WindowsEvents = SecurityEvent;\nWindowsEvents | where EventID == 4625\n| order by TimeGenerated desc\n| evaluate ipv4_lookup(GeoIPDB_FULL, IpAddress, network)\n| summarize FailureCount = count() by IpAddress, latitude, longitude, cityname, countryname\n| project FailureCount, AttackerIp = IpAddress, latitude, longitude, city = cityname, country = countryname,\nfriendly_location = strcat(cityname, \" (\", countryname, \")\");",
-	"size": 3,
-	"timeContext": {
-		"durationMs": 2592000000
-	},
-	"queryType": 0,
-	"resourceType": "microsoft.operationalinsights/workspaces",
-	"visualization": "map",
-	"mapSettings": {
-		"locInfo": "LatLong",
-		"locInfoColumn": "countryname",
-		"latitude": "latitude",
-		"longitude": "longitude",
-		"sizeSettings": "FailureCount",
-		"sizeAggregation": "Sum",
-		"opacity": 0.8,
-		"labelSettings": "friendly_location",
-		"legendMetric": "FailureCount",
-		"legendAggregation": "Sum",
-		"itemColorSettings": {
-		"nodeColorField": "FailureCount",
-		"colorAggregation": "Sum",
-		"type": "heatmap",
-		"heatmapPalette": "greenRed"
-		}
-	}
-	},
-	"name": "query - 0"
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "let Geo = _GetWatchlist(\"geoip\");\nlet SecurityEvent = Event;\nSecurityEvent\n| where EventID == 4625\n| order by TimeGenerated desc\n| extend IpAddress = extract(@\"<Data Name=\"\"IpAddress\"\">([^<]+)<\", 1, tostring(EventData))\n| where isnotempty(IpAddress) and IpAddress !in (\"-\", \"0\", \"127.0.0.1\", \"::1\")\n| evaluate ipv4_lookup(Geo, IpAddress, network)\n| summarize FailureCount = count() by IpAddress, latitude, longitude, cityname, countryname\n| project FailureCount, AttackerIp = IpAddress, latitude, longitude, city = cityname, country = countryname,\nfriendly_location = strcat(cityname, \" (\", countryname, \")\");\n\n",
+        "size": 3,
+        "timeContext": {
+          "durationMs": 2592000000
+        },
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "map",
+        "sortBy": [],
+        "mapSettings": {
+          "locInfo": "LatLong",
+          "locInfoColumn": "countryname",
+          "latitude": "latitude",
+          "longitude": "longitude",
+          "sizeSettings": "FailureCount",
+          "sizeAggregation": "Sum",
+          "opacity": 0.8,
+          "labelSettings": "friendly_location",
+          "legendMetric": "FailureCount",
+          "legendAggregation": "Sum",
+          "itemColorSettings": {
+            "nodeColorField": "FailureCount",
+            "colorAggregation": "Sum",
+            "type": "heatmap",
+            "heatmapPalette": "greenRed"
+          }
+        }
+      },
+      "name": "query - 0"
+    }
+  ],
+  "fallbackResourceIds": [
+    "/subscriptions/951f5a86-005e-4939-b1d3-b50398f32b28/resourcegroups/honeypot-rg/providers/microsoft.operationalinsights/workspaces/honeypot-law"
+  ],
+  "fromTemplateId": "sentinel-UserWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
 }

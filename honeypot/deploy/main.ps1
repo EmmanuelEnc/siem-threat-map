@@ -16,7 +16,11 @@ param(
     [string]$publicIpSku = "Standard",
     [bool]$disableFirewall = $true,
 
-    [string]$dcrName = "honeypot-winsec-dcr"
+    [string]$dcrName = "honeypot-winsec-dcr",
+
+    [string] $watchlistAlias = "geoip",
+    [string] $watchlistDisplay = "IP Geolocation (CSV)",
+    [string] $itemsSearchKey = "network"
 )
 
 # --- Create Resource Group ---
@@ -110,6 +114,93 @@ $dcrId  = $dcrOutputs.dataCollectionRuleId.value
 
 Write-Host "DCR created: $dcrId"
 
-# Content (Workbook, Analytics rule)
 
-# Watchlist upload
+# --- Watchlist upload (geoip) ---
+# Path to the watchlist CSV
+$csvPath = "../watchlists/ip_geolocation.csv"
+# Use the absolute path and pass it to az CLI with the @file syntax so the CLI reads
+# the file contents instead of inlining them on the command line (avoids Windows cmd length limits)
+$csvFull = (Resolve-Path $csvPath).Path
+
+# Check if the watchlist already exists
+try {
+  $azExe = (Get-Command az -ErrorAction Stop).Source
+} catch {
+  Write-Error "Azure CLI 'az' not found in PATH. Install Azure CLI from https://aka.ms/cli and try again."
+  exit 1
+}
+
+# Verify the 'az sentinel' command is available (some CLI functionality is provided by extensions).
+try {
+  & $azExe sentinel -h > $null 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    throw "sentinel-not-available"
+  }
+} catch {
+  Write-Warning "The 'az sentinel' commands are not available. Install the Sentinel extension to enable them."
+  Write-Host "To search available extensions (PowerShell):"
+  Write-Host "  az extension list-available -o table | Select-String -Pattern sentinel"
+  Write-Host "To install a sentinel extension (example):"
+  Write-Host "  az extension add --name sentinel"
+  Write-Host "After installing, rerun this script."
+  # don't exit here; script will likely fail when it reaches sentinel calls, but user has guidance.
+}
+
+$wlExists = & $azExe sentinel watchlist show `
+  -g $resourceGroupName -w $workspaceName `
+  -n $watchlistAlias `
+  --query "name" -o tsv 2>$null
+
+if ([string]::IsNullOrWhiteSpace($wlExists)) {
+  Write-Host "Creating Sentinel watchlist '$watchlistAlias' from $csvPath ..."
+  # Use the call operator (&) to ensure PowerShell invokes the az executable and does not
+  # attempt to resolve 'sentinel' as a PowerShell command or alias.
+  & $azExe sentinel watchlist create `
+    -g $resourceGroupName -w $workspaceName `
+    -n $watchlistAlias `
+    --display-name "$watchlistDisplay" `
+    --provider "custom" `
+    --items-search-key "$itemsSearchKey" `
+    --content-type "text/csv" `
+    --source (Split-Path $csvPath -Leaf) `
+    --source-type "Local file" `
+    --raw-content "@$csvFull" `
+  Write-Host "Watchlist created: $watchlistAlias"
+} else {
+  Write-Host "Updating existing watchlist '$watchlistAlias' from $csvPath ..."
+  # Update using call operator to avoid PowerShell parsing issues
+  & $azExe sentinel watchlist update `
+    -g $resourceGroupName -w $workspaceName `
+    -n $watchlistAlias `
+    --display-name "$watchlistDisplay" `
+    --provider "custom" `
+    --items-search-key "$itemsSearchKey" `
+    --content-type "text/csv" `
+    --source (Split-Path $csvPath -Leaf) `
+    --source-type "Local file" `
+    --raw-content "@$csvFull" `
+  Write-Host "Watchlist updated: $watchlistAlias"
+}
+
+# --- Workbook (AttackMap) ---
+$workbookName = "AttackMap"
+$wbDeployName = "workbook-attackmap"
+$wbFile       = (Resolve-Path '..\bicep\workbook.bicep').Path
+
+
+# Create the workbook deployment (two-call pattern not required here, but keeps it consistent)
+$wbOutputs =az deployment group create `
+  -g $resourceGroupName `
+  -n $wbDeployName `
+  -f $wbFile `
+  -p workbookDisplayName="$workbookName" `
+     workspaceId="$workspaceId" `
+     location="$workspaceLocation" `
+  --query properties.outputs -o json | ConvertFrom-Json
+
+$workbookResourceId = $wbOutputs.workbookResourceId.value
+$workbookName       = $wbOutputs.workbookName.value
+
+Write-Host "Workbook deployed:"
+Write-Host "  Name: $workbookName"
+Write-Host "  Id:   $workbookResourceId"
