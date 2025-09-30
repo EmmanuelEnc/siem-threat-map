@@ -20,9 +20,9 @@ param(
 
     [string] $watchlistAlias = "geoip",
     [string] $watchlistDisplay = "IP Geolocation (CSV)",
-    [string] $itemsSearchKey = "network"
+    [string] $itemsSearchKey = "network",
 
-    [string] $workbookName = "AttackMap"
+    [string] $workbookName = "AttackMap",
     [string] $wbDeployName = "workbook-attackmap"
 )
 
@@ -82,6 +82,7 @@ $vmOutputs = az deployment group create `
     location="$location" `
     subnetId="$subnetId" `
     nsgId="$nsgId" `
+    adminUsername="$adminUsername" `
     adminPassword="$adminPassword" `
     vmSize="$vmSize" `
     publicIpSku="$publicIpSku" `
