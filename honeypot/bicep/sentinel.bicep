@@ -5,6 +5,10 @@ param workspaceId string
 param workspaceName string
 param location string
 
+//Onboarding Law to Sentinel 
+//PUT https://management.azure.com/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.OperationalInsights/workspaces/{workspaceName}/providers/Microsoft.SecurityInsights/onboardingStates/{sentinelOnboardingStateName}?api-version=2024-03-01
+
+
 // Enabling Sentinel = deploy the SecurityInsights solution bound to the LAW
 resource sentinel 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = {
   name: 'SecurityInsights(${workspaceName})'
