@@ -30,7 +30,6 @@ param(
 az group create -n $resourceGroupName -l $location | Out-Null
 Write-Host "Resource Group created: $resourceGroupName @ $location"
 
-
 # --- Log Analytics Workspace deployment ---
 $lawOutputs = az deployment group create `
   -g $resourceGroupName `
@@ -55,7 +54,6 @@ $sentinelOutputs = az deployment group create `
 $sentinelSolutionName = $sentinelOutputs.sentinelSolutionName.value
 Write-Host "Sentinel solution deployed: $sentinelSolutionName"
 
-
 # --- Network (VNet, Subnet, NSG attach) ---
 $netOutputs = az deployment group create `
   -g $resourceGroupName `
@@ -72,7 +70,6 @@ Write-Host "Network ready:"
 Write-Host "  VNet:   $vnetName"
 Write-Host "  Subnet: $subnetName"
 Write-Host "  NSG:    $nsgName"
-
 
 # VM + AMA + disable firewall via CustomScriptExtension
 $vmOutputs = az deployment group create `
@@ -96,7 +93,6 @@ Write-Host "VM deployed:"
 Write-Host "  Id: $vmId"
 Write-Host "  Public IP: $publicIpAddress"
 
-
 # --- DCR (Windows Security) + Association to VM ---
 $dcrOutputs = az deployment group create `
   -g $resourceGroupName `
@@ -109,7 +105,6 @@ $dcrOutputs = az deployment group create `
 $dcrId  = $dcrOutputs.dataCollectionRuleId.value
 
 Write-Host "DCR created: $dcrId"
-
 
 # --- Watchlist upload (geoip) ---
 # Path to the watchlist CSV
@@ -180,7 +175,6 @@ if ([string]::IsNullOrWhiteSpace($wlExists)) {
 
 # --- Workbook (AttackMap) ---
 $wbFile       = (Resolve-Path '..\bicep\workbook.bicep').Path
-
 
 # Create the workbook deployment (two-call pattern not required here, but keeps it consistent)
 $wbOutputs =az deployment group create `
